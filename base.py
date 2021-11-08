@@ -395,9 +395,15 @@ class Number:
 				)
 
 			return Number(self.value / other.value).set_context(self.context), None
-			
+
 	def powed_by(self, other):
 		if isinstance(other, Number):
+			if isinstance(other.value, float):
+				return None, RTError(
+					other.pos_start, other.pos_end,
+					'Ekspozisyon ak desimal',
+					self.context
+				)
 			return Number(self.value ** other.value).set_context(self.context), None
 
 	def __repr__(self):
