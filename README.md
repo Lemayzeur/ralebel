@@ -1,4 +1,4 @@
-# Foobar
+# Ralebel
 
 Ralebel is an interpreted, Haitian Creole programming language that aims to help Haitians by starting with the fundamental algorithm 
 
