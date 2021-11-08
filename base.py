@@ -11,7 +11,7 @@ LETTERS_DIGITS = LETTERS + DIGITS
 TT_INT		= 'INT'
 TT_FLOAT	= 'FLOAT'
 TT_IDENTIFIER = 'IDENTIFIER'
-TT_KEYWORD = 'KEYWORD'
+TT_KEYWORD 	= 'KEYWORD'
 TT_PLUS		= 'PLUS'
 TT_MINUS	= 'MIN'
 TT_MUL		= 'MUL'
@@ -23,7 +23,7 @@ TT_RPAREN	= 'RPAREN'
 TT_EOF		= 'EOF'
 
 KEYWORDS = [
-	'VAR', 'CONST'
+	'VAR', 'var',
 ]
 
 ''' ERRORS'''
@@ -375,7 +375,7 @@ class Parser:
 	def expr(self):
 		res = ParseResult()
 
-		if self.current_tok.matches(TT_KEYWORD, 'VAR'):
+		if self.current_tok.matches(TT_KEYWORD, 'VAR') or self.current_tok.matches(TT_KEYWORD, 'var'):
 			res.register_advancement()
 			self.advance()
 
