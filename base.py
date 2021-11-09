@@ -233,9 +233,10 @@ class VarAccessNode:
 		self.pos_end = self.var_name_tok.pos_end
 
 class VarAssignNode:
-	def __init__(self, var_name_tok, value_node):
+	def __init__(self, var_name_tok, value_node, var_access=False):
 		self.var_name_tok = var_name_tok
 		self.value_node = value_node
+		self.var_access = var_access
 
 		self.pos_start = self.var_name_tok.pos_start
 		self.pos_end = self.value_node.pos_end
@@ -300,12 +301,15 @@ class Parser:
 	def __init__(self, tokens):
 		self.tokens = tokens
 		self.tok_idx = -1
+		self.next_tok = None
 		self.advance()
 
 	def advance(self, ):
 		self.tok_idx += 1
 		if self.tok_idx < len(self.tokens):
 			self.current_tok = self.tokens[self.tok_idx]
+		if (self.tok_idx + 1) < len(self.tokens):
+			self.next_tok = self.tokens[self.tok_idx + 1]
 		return self.current_tok
 
 	def parse(self):
@@ -380,6 +384,11 @@ class Parser:
 			self.advance()
 
 			if self.current_tok.type != TT_IDENTIFIER:
+				if self.current_tok.value in KEYWORDS:
+					return res.failure(InvalidSyntaxError(
+						self.current_tok.pos_start, self.current_tok.pos_end,
+						"Itilizasyon mo kle pou non varyab"
+					))
 				return res.failure(InvalidSyntaxError(
 					self.current_tok.pos_start, self.current_tok.pos_end,
 					"Atann yon non varyab"
@@ -400,6 +409,17 @@ class Parser:
 			expr = res.register(self.expr())
 			if res.error: return res
 			return res.success(VarAssignNode(var_name, expr))
+
+		# Access previous defined variable
+		if self.current_tok.type == TT_IDENTIFIER and (self.next_tok is not None and self.next_tok.type == TT_EQ):
+			var_name = self.current_tok
+			res.register_advancement()
+			self.advance()
+			res.register_advancement()
+			self.advance()
+			expr = res.register(self.expr())
+			if res.error: return res
+			return res.success(VarAssignNode(var_name, expr, var_access=True))
 
 		node = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
 
@@ -533,6 +553,12 @@ class SymbolTable:
 			return self.parent.get(name)
 		return value
 
+	def contains(self, name):
+		exists = name in self.symbols
+		if not exists and self.parent:
+			return name in self.parent
+		return exists
+
 	def set(self, name, value):
 		self.symbols[name] = value
 
@@ -573,8 +599,18 @@ class Interpreter:
 		return res.success(value)
 
 	def visit_VarAssignNode(self, node, context):
+		var_access = getattr(node, 'var_access', False)
 		res = RTResult()
 		var_name = node.var_name_tok.value
+		
+		if var_access:
+			if not context.symbol_table.contains(var_name):
+				return res.failure(RTError(
+					node.pos_start, node.pos_end,
+					f"'{var_name}' pa te defini",
+					context
+				))
+
 		value = res.register(self.visit(node.value_node, context))
 		if res.error: return res
 
