@@ -126,6 +126,10 @@ class Lexer:
 		self.current_char = None
 		self.advance()
 
+	@property
+	def clean_text(self):
+		return self.text.strip().replace('\t','').replace('\n','').replace(' ', '')
+
 	def advance(self):
 		self.pos.advance(self.current_char)
 		# print(self.pos, self.text)
@@ -172,7 +176,7 @@ class Lexer:
 				char = self.current_char 
 				self.advance()
 				return [], IllegalCharError(pos_start, self.pos, f"'{char}'") 
-		
+
 		tokens.append(Token(TT_EOF, pos_start=self.pos))
 		return tokens, None
 
@@ -661,18 +665,20 @@ global_symbol_table.set("null", Number(0))
 def run(fn, text):
 	# Generate tokens
 	lexer = Lexer(fn, text)
-	tokens, error = lexer.make_tokens()
-	if error: return None, error
-	
-	# Generate AST
-	parser = Parser(tokens)
-	ast = parser.parse()
-	if ast.error: return None, ast.error
+	if lexer.clean_text != '':
+		tokens, error = lexer.make_tokens()
+		if error: return None, error
+		
+		# Generate AST
+		parser = Parser(tokens)
+		ast = parser.parse()
+		if ast.error: return None, ast.error
 
-	# Run program
-	interpreter = Interpreter()
-	context = Context('<program>')
-	context.symbol_table = global_symbol_table
-	result = interpreter.visit(ast.node, context)
+		# Run program
+		interpreter = Interpreter()
+		context = Context('<program>')
+		context.symbol_table = global_symbol_table
+		result = interpreter.visit(ast.node, context)
 
-	return result.value, result.error
+		return result.value, result.error
+	return '', None
