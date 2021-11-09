@@ -32,7 +32,7 @@ KEYWORDS = [
 	'VAR', 'var',
 	'AK', 'ak',
 	'OU', 'ou',
-	'NOT', 'not'
+	'NEG', 'neg'
 ]
 
 ''' ERRORS'''
@@ -451,7 +451,7 @@ class Parser:
 	def comp_expr(self):
 		res = ParseResult()
 
-		if self.current_tok.matches(TT_KEYWORD, 'NOT'):
+		if self.current_tok.matches(TT_KEYWORD, 'NEG') or self.current_tok.matches(TT_KEYWORD, 'neg'):
 			op_tok = self.current_tok
 			res.register_advancement()
 			self.advance()
@@ -465,7 +465,7 @@ class Parser:
 		if res.error:
 			return res.failure(InvalidSyntaxError(
 				self.current_tok.pos_start, self.current_tok.pos_end,
-				"Expected int, float, identifier, '+', '-', '(' or 'NOT'"
+				"Expected int, float, identifier, '+', '-', '(' oubyen 'NEG'"
 			))
 
 		return res.success(node)
@@ -797,7 +797,7 @@ class Interpreter:
 
 		if node.op_tok.type == TT_MINUS:
 			number, error = number.multed_by(Number(-1))
-		elif node.op_tok.matches(TT_KEYWORD, 'NOT') or node.op_tok.matches(TT_KEYWORD, 'not'):
+		elif node.op_tok.matches(TT_KEYWORD, 'NEG') or node.op_tok.matches(TT_KEYWORD, 'neg'):
 			number, error = number.notted()
 
 		if error:
@@ -806,9 +806,12 @@ class Interpreter:
 			return res.success(number.set_pos(node.pos_start, node.pos_end))
 
 global_symbol_table = SymbolTable()
-global_symbol_table.set("NULL", Number(0))
-global_symbol_table.set("FALSE", Number(0))
-global_symbol_table.set("TRUE", Number(1))
+global_symbol_table.set("ANYEN", Number(0))
+global_symbol_table.set("anyen", Number(0))
+global_symbol_table.set("FO", Number(0))
+global_symbol_table.set("fo", Number(0))
+global_symbol_table.set("VRE", Number(1))
+global_symbol_table.set("vre", Number(1))
 
 def run(fn, text):
 	# Generate tokens
